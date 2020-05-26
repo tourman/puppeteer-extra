@@ -13,7 +13,16 @@ test('vanilla: empty plugins, empty mimetypes', async t => {
 })
 
 test('stealth: has plugin, has mimetypes', async t => {
-  const { plugins, mimeTypes } = await getStealthFingerPrint(Plugin)
+  const { plugins, mimeTypes } = await getStealthFingerPrint(Plugin, page => page.evaluate(() => {
+    for (const mimeType of navigator.mimeTypes) {
+      const { enabledPlugin } = mimeType;
+    }
+  }))
   t.is(plugins.length, 3)
   t.is(mimeTypes.length, 4)
+  for (const mimeType of mimeTypes) {
+    const { description, suffixes, type, enabledPlugin } = mimeType;
+    console.log(typeof mimeType)
+    console.log({ description, suffixes, type, enabledPlugin })
+  }
 })

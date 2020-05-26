@@ -14,6 +14,7 @@
     "docs-for-evasions": "cd ./evasions && loop \"documentation readme --quiet --shallow --github --markdown-theme transitivebs --readme-file readme.md --section API index.js && npx prettier --write readme.md\"",
     "test": "ava --concurrency 2 -v && eslint --ext .js .",
     "test-ci": "yarn test",
+    "test-ep": "ava --concurrency 2 -v evasions/navigator.plugins/index.test.js",
     "types": "npx --package typescript@3.7 tsc --emitDeclarationOnly --declaration --allowJs index.js"
   },
   "engines": {

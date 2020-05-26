@@ -160,6 +160,8 @@ class Plugin extends PuppeteerExtraPlugin {
           get: () => mimeTypeArray
         })
 
+        const enabledPluginMap = new Map();
+
         function generatePluginArray() {
           const arr = fakeData.plugins
             .map(obj => getSubset(['name', 'filename', 'description'], obj))
@@ -169,7 +171,14 @@ class Plugin extends PuppeteerExtraPlugin {
               )
               // Add mimetypes
               mimes.forEach((mime, index) => {
-                navigator.mimeTypes[mime.type].enabledPlugin = obj
+                /*
+                Object.defineProperty(navigator.mimeTypes[mime.type], 'enabledPlugin', {
+                  enumerable: false,
+                  value: obj,
+                })
+                */
+                // navigator.mimeTypes[mime.type].enabledPlugin = obj
+                enabledPluginMap.set(navigator.mimeTypes[mime.type], obj);
                 obj[mime.type] = navigator.mimeTypes[mime.type]
                 obj[index] = navigator.mimeTypes[mime.type]
               })
@@ -196,6 +205,51 @@ class Plugin extends PuppeteerExtraPlugin {
         }
 
         const pluginArray = generatePluginArray()
+        function toString() {
+          return 'function toString() { [native code] }';
+        };
+
+        function f(name, func, prefix = '') {
+          eval(`
+            var result = function ${name}(...args) {
+              if (typeof func === 'function') {
+                return func.call(this, ...args);
+              } else {
+                return func;
+              }
+            };
+          `);
+          var nameWithPrefix = prefix + name;
+          result.name = nameWithPrefix;
+          result.toString = function toString() {
+            return `function ${nameWithPrefix}() { [native code] }`;
+          };
+          (function hide(ts, counter = 0) {
+            if (counter > 20) {
+              return;
+            }
+            ts.toString = toString;
+            hide(ts.toString, ++counter);
+          })(result.toString);
+          return result;
+        }
+
+        function d(obj, prop, getter) {
+          Object.defineProperty(obj, prop, {
+            get: f(prop, getter, 'get '),
+          });
+        }
+        d(MimeType.prototype, 'enabledPlugin', function() {
+          return enabledPluginMap.get(this);
+        });
+        ///
+        /*
+        Object.defineProperty(MimeType.prototype, 'enabledPlugin', {
+          get: function enabledPlugin() {
+            return enabledPluginMap.get(this);
+          }
+        });
+        */
         Object.defineProperty(navigator, 'plugins', {
           get: () => pluginArray
         })
